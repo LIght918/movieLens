@@ -6,6 +6,7 @@ Created on Wed Mar 04 15:31:20 2015
 """
 
 import feature_prep
+import lfm
 import predict
 import pandas as pd
 import numpy as np
@@ -14,7 +15,7 @@ from sparsesvd import sparsesvd
 import re
 import utility
 import scipy
-
+from sklearn.decomposition import ProjectedGradientNMF
 
 
 
@@ -30,16 +31,26 @@ df = predict.Predict.main(user_item_matrix, item_item_matrix, df)
 print sum(abs(df.rating-df.score))/len(df)
 print 'rmse: ',np.sqrt(sum((df.rating-df.score)**2)/len(df))
 
-
-##SVD 
-
-smat_df = scipy.sparse.csc_matrix(user_item_matrix) # convert to sparse CSC format
-ut, s, vt = sparsesvd(smat_df, 18) # do SVD, asking for 100 factors
-movie_df = pd.DataFrame(vt).T
-item_df = pd.read_csv(utility.CONST_PATH+'u.item', sep='\t', names=['movie'])
+item_df = pd.read_csv(utility.CONST_PATH + 'u.item', names=['movie'],sep='\t')
 item_df = utility.Utility.prep_item_df(item_df)
 
-test = pd.concat([movie_df,item_df],axis=1)
-test = test.drop('moviename',axis=1)
 
-test.corr()
+genre_num = 50
+A = np.array(user_item_matrix)
+nmf_model = ProjectedGradientNMF(n_components = genre_num, init='random', random_state=0)
+nmf_model.fit(A)
+## decomposited user np array
+W = nmf_model.fit_transform(A)
+
+## decomposited item np array
+H = nmf_model.components_
+
+movie = pd.DataFrame(H).T
+movie = pd.concat([movie,item_df],axis=1)
+
+movie_genre = ['Action', 'Adventure', 'Animation', 'Children', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir', 'Horror', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western']
+
+
+ret = pd.DataFrame(movie[movie[0]>5][movie_genre].sum(axis=0))
+for i in range(genre_num):
+    ret[str(i)] = pd.DataFrame(movie[movie[i]>5][movie_genre].sum(axis=0))
