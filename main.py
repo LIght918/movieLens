@@ -15,42 +15,41 @@ from sparsesvd import sparsesvd
 import re
 import utility
 import scipy
-from sklearn.decomposition import ProjectedGradientNMF
-
+import nmf
+import lsa
+import fa
 
 
 
 ## import data
 columns = ['userid','itemid','rating','timestamp']
-df = pd.read_csv(utility.CONST_PATH + 'u.data', names=columns, sep='\t')
+#df_small = pd.read_csv(utility.CONST_PATH + 'u.data', names=columns, sep='\t')
+#ser_item_matrix, item_item_matrix = feature_prep.Feature.main(df_small)
+#df_small = predict.Predict.main(user_item_matrix, item_item_matrix, df_small)
+#item_df = pd.read_csv(utility.CONST_PATH + 'u.item', names=['movie'],sep='\t')
+#item_df = utility.Utility.prep_item_df(item_df)
 
-user_item_matrix, item_item_matrix = feature_prep.Feature.main(df)
+#print sum(abs(df_small.rating-df_small.score))/len(df_small)
+#print 'rmse: ',np.sqrt(sum((df_small.rating-df_small.score)**2)/len(df_small))
 
-df = predict.Predict.main(user_item_matrix, item_item_matrix, df)
+#df_10m = pd.read_csv(utility.CONST_PATH + 'ratings.dat', names=columns, sep='::')
+#user_item_matrix, item_item_matrix = feature_prep.Feature.main(df_10m)
+item_df_10m = pd.read_csv(utility.CONST_PATH + 'movies.dat', names=['movie_tmp'],sep='\t')
+item_df_10m = utility.Utility.prep_item_df_large(item_df_10m)
+item_df_10m = utility.Utility.prep_item_df(item_df_10m)
+print 'item_matrix loaded...'
 
-print sum(abs(df.rating-df.score))/len(df)
-print 'rmse: ',np.sqrt(sum((df.rating-df.score)**2)/len(df))
+df_1m = pd.read_csv(utility.CONST_PATH + 'out.movielens-1m', names=columns, skiprows=1,sep=' ')
+user_item_matrix, item_item_matrix = feature_prep.Feature.main(df_1m)
 
-item_df = pd.read_csv(utility.CONST_PATH + 'u.item', names=['movie'],sep='\t')
-item_df = utility.Utility.prep_item_df(item_df)
+ret, movie = fa.FactAnalysis.groupMovieGenre(user_item_matrix,item_df_10m)  ## fact analysis
 
-
-genre_num = 50
-A = np.array(user_item_matrix)
-nmf_model = ProjectedGradientNMF(n_components = genre_num, init='random', random_state=0)
-nmf_model.fit(A)
-## decomposited user np array
-W = nmf_model.fit_transform(A)
-
-## decomposited item np array
-H = nmf_model.components_
-
-movie = pd.DataFrame(H).T
-movie = pd.concat([movie,item_df],axis=1)
-
-movie_genre = ['Action', 'Adventure', 'Animation', 'Children', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Fantasy', 'Film-Noir', 'Horror', 'Musical', 'Mystery', 'Romance', 'Sci-Fi', 'Thriller', 'War', 'Western']
+#ret, movie = lsa.LSA.groupMovieGenre(user_item_matrix,item_df_10m)  ## LSA
 
 
-ret = pd.DataFrame(movie[movie[0]>5][movie_genre].sum(axis=0))
-for i in range(genre_num):
-    ret[str(i)] = pd.DataFrame(movie[movie[i]>5][movie_genre].sum(axis=0))
+
+## ret['0'].plot(kind='bar')  / sample code to plot genre
+## movie[movie[18]>5]['moviename']  /sample code to plot movie belong to that category
+## movie[[0,'moviename']].sort([0], ascending=False).head(10) select top 10 movie from categ
+
+

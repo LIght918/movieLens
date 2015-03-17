@@ -11,7 +11,7 @@ import numpy
 class LFM:
 
     @staticmethod
-    def matrix_factorization(R, P, Q, K, steps=5000, alpha=0.0002, beta=0.02):
+    def matrix_factorization(R, P, Q, K, steps=1000, alpha=0.0002, beta=0.02):
         Q = Q.T
         for step in xrange(steps):
             print step            
@@ -22,7 +22,7 @@ class LFM:
                         for k in xrange(K):
                             P[i][k] = P[i][k] + alpha * (2 * eij * Q[k][j] - beta * P[i][k])
                             Q[k][j] = Q[k][j] + alpha * (2 * eij * P[i][k] - beta * Q[k][j])
-            eR = numpy.dot(P,Q)
+            #eR = numpy.dot(P,Q)
             e = 0
             for i in xrange(len(R)):
                 for j in xrange(len(R[i])):

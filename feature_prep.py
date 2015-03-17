@@ -40,6 +40,7 @@ class Feature:
                 rating = list(user_rating_tuple[1])[j]                                
                 item_vector[item] = item_vector[item] + rating
             user_item_dict[user_item_tuple[0]] = item_vector
+            del item_vector
         user_item_matrix = pd.DataFrame(user_item_dict.values())
         user_item_matrix.index = user_item_dict.keys()
         return user_item_matrix
@@ -60,10 +61,13 @@ class Feature:
     def main(data_df):
     ## get all the item         
         itemdict = Feature.get_itemList(data_df)
+        print 'itemdict calculated...'
     ## get user_item matrix, u1,item1 is u1's rating for item1        
         user_item_matrix = Feature.get_user_item_matrix(data_df, itemdict)
+        print 'user_item_matrix calculated...'
     ## get item_item_matrix        
         item_item_matrix = Feature.item_similarity(user_item_matrix)
+        print 'item_item_matrix calculated...'
         return user_item_matrix, item_item_matrix
 
 
